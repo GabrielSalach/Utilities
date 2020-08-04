@@ -4,3 +4,4 @@ This is a shitty port scanner done in Python in like 10 minutes thanks to a tuto
 
 It still needs a lot of improvements to be useful (multithreading) but I'll implement this later, too lazy to learn this rn.
 
+> Syntax : python rbps.py [target address]
