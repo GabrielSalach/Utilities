@@ -3,6 +3,7 @@
 
 
 This is a small python script that I use to generate a random string. 
+The only problem is that it generates RANDOM words. It means that it doesn't look like latin at all but whatever, it does the job.
 
 Syntax : python loremipsum.py [word count] (options)[-o] [output file path]
 
