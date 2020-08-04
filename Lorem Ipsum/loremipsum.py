@@ -65,7 +65,9 @@ def generateWord(hasPoint):
 	if hasPoint == True:
 		word[1] = word[1].upper()
 
-	if random.random() < 0.3:
+	if random.random() < 0.2:
+		word += ","
+	elif random.random() < 0.1:
 		word += "."
 
 	return "".join(word)
