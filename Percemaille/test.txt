@@ -1,12 +1,8 @@
-[Section]
 aal=3     
 bal2=4          
-[Section]
 cal=3
 dal2=4
 eal3=4
-[Section]
-[Section]
 cal=3
 dal2=4
 eal3=4

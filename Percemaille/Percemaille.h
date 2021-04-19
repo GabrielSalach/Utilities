@@ -9,6 +9,7 @@
 typedef struct{
     char (**matrix)[32];
     int section_count, value_count;
+    int subsectiont_values[32];
     char path[64];
 }Pe_File;
 
@@ -38,11 +39,12 @@ int pe_read_file(Pe_File* file) {
     unsigned int i;
     int section_count, value_count;
     int subsection_values[32];
-    int temp;
     section_count = 0;
     value_count = 0;
 
-    for(i = 0; i < 32; i++) {
+    /* NEED TO CHECK IF THE FILE IS A .INI */
+
+    for(i = 0; i < 32; i++) {                                                                                   /* Initializes the subsection_values array to 0. */
         subsection_values[i] = 0;
     }
 
@@ -52,45 +54,39 @@ int pe_read_file(Pe_File* file) {
         return -1;
     }
     buffer = fgetc(stream);
-    /* Loops through file to count the ammount of sections and values */
-    while(buffer != EOF) {
-        /* Ignores comment */
-        if(buffer == ';') {
+    
+    while(buffer != EOF) {                                                                                      /* Loops through file to count the ammount of sections and values */
+        if(buffer == ';') {                                                                                     /* Ignores comment */
             while(buffer != '\n' && buffer != EOF) {
                 buffer = fgetc(stream);
             }
-            buffer = fgetc(stream);
-        } else if(buffer == '[') {
-            /* Adds 1 section and read until the end of line*/
+            buffer = fgetc(stream);                                                                             /* Sets the buffer to the next value after \n for the next check */
+        } else if(buffer == '[') {                                                                              /* Adds 1 section and read until the end of line*/
             section_count++;
             while(buffer != '\n' && buffer != EOF) {
                 buffer = fgetc(stream);
             }
-            buffer = fgetc(stream);
-            /* Count every value under this section until it reaches another region or a comment */
-            while(buffer != '[' && buffer != EOF) {
-                /* Adds value to the subsection count */
-                if(buffer != ';') {
+            buffer = fgetc(stream);                                                                             /* Sets the buffer to the next value after \n for the next check */
+            while(buffer != '[' && buffer != EOF) {                                                             /* Count every value under this section until it reaches another region or a comment */
+                if(buffer != ';') {                                                                             /* Adds value to the subsection count */
                     value_count++;
                     subsection_values[section_count - 1] += 1;
                     while(buffer != '\n' && buffer != EOF) {
                         buffer = fgetc(stream);
                     }
-                } else {
-                    /* Ignores if its a comment */
+                } else {                                                                                        /* Ignores line if its a comment */
                     while(buffer != '\n' && buffer != EOF) {
                         buffer = fgetc(stream);
                     }
                 }
-                buffer = fgetc(stream);
+                buffer = fgetc(stream);                                                                         /* Sets the buffer to the next value after \n for the next check */
             }
-        } else {
-            /* Value without section first */
+        } else {                                                                                                /* Value without section first */
             value_count++;
             while(buffer != '\n' && buffer != EOF) {
                 buffer = fgetc(stream);
             }
-            buffer = fgetc(stream);
+            buffer = fgetc(stream);                                                                             /* Sets the buffer to the next value after \n for the next check */
         }
     }
     
@@ -102,14 +98,24 @@ int pe_read_file(Pe_File* file) {
 
     file->section_count = section_count;
     file->value_count = value_count;
-    file->matrix = malloc(sizeof (char**) * section_count);
-    for(i = 0; i < section_count; i++) {
-        temp = subsection_values[i];
-        file->matrix[i] = malloc(sizeof (char*) * temp * 2);
-        printf("allocated %d bytes to matrix[%d]\n", (int) (sizeof (char*) * subsection_values[i] * 2), i);
+    if(section_count == 0) {                                                                                    /* If there are no sections at all in the file */
+        file->matrix = (char (**)[32]) malloc(sizeof (char**));
+        file->matrix[0] = (char (*)[32]) malloc(sizeof(char*) * value_count * 2);
+        printf("allocated %d bytes to matrix[0]\n", (int) (sizeof (char*) * value_count * 2));
+    } else {                                                                                                    /* Else, allocates the right number of subvalues to each section */
+        file->matrix = (char (**)[32]) malloc(sizeof (char**) * section_count);
+        for(i = 0; i < section_count; i++) {
+            file->matrix[i] = (char (*)[32]) malloc(sizeof (char*) * subsection_values[i] * 2);
+            printf("allocated %d bytes to matrix[%d]\n", (int) (sizeof (char*) * subsection_values[i] * 2), i);
+        }
     }
+    
+    
 
-    /* TODO : Actually store data */
+    fseek(stream, 0, SEEK_SET);                                                                                 /* Returns to the beginning of the file. */
+
+
+
     
     return 0;
 
@@ -122,8 +128,12 @@ int pe_read_file(Pe_File* file) {
 
 void pe_file_destroy(Pe_File* file) {
     int i;
-    for(i = 0; i < file->section_count; i++) {
-        free(file->matrix[i]);
+    if(file->section_count == 0) {
+        free(file->matrix[0]);
+    } else {
+        for(i = 0; i < file->section_count; i++) {
+            free(file->matrix[i]);
+        }
     }
     free(file->matrix);
 }
