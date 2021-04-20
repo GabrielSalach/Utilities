@@ -17,9 +17,10 @@ typedef struct{
 /* ---------- FUNCTIONS HEADERS ---------- */
 
 Pe_File*            pe_file_create(char *path);                                                 /* Creates a Pe_File struct */
-int                 pe_read_file(Pe_File* file);                                                /* Reads the content of the file */
-void                pe_display_file(Pe_File* file);                                             /* Displays the content of a file */
+int                 pe_read_file(Pe_File* file);                                                /* Reads the content of the file associated with the Pe_File passed as argument and stores it inside the Pe_File */
 void                pe_file_destroy(Pe_File* file);                                             /* Frees the memory of a Pe_File */
+void                pe_display_file(Pe_File* file);                                             /* Displays the content of a Pe_File */
+char*               pe_get_value(Pe_File* file, char* section, char* variable);                 /* Returns the value of the associated variable name underneath the section passed as arguments */
 
 
 /* ---------- STRUCT ALLOCATION ---------- */
@@ -276,7 +277,7 @@ void pe_file_destroy(Pe_File* file) {
     free(file->matrix);
 }
 
-/* ---------- DISPLAY AND READ ---------- */
+/* ---------- DISPLAY AND GET VALUES ---------- */
 
 void pe_display_file(Pe_File* file) {
     int i, j;
@@ -290,4 +291,22 @@ void pe_display_file(Pe_File* file) {
             }
         }
     }
+}
+
+char* pe_get_value(Pe_File* file, char* section, char* variable) {
+    int i, section_index;
+    char* return_string;
+    return_string = malloc(32 * sizeof *return_string);
+    for(i = 0; i < 32; i++) 
+        return_string[i] = 0;
+
+    for(i = 0; i < file->section_count; i++) {
+        if(strcmp(file->matrix[i][0], section) == 0)
+            section_index = i;
+    }
+    for(i = 0; i < file->subsectiont_values[section_index]*2+1; i++) {
+        if(strcmp(file->matrix[section_index][i], variable) == 0) 
+            strcpy(return_string, file->matrix[section_index][i+1]);
+    }
+    return return_string;
 }
