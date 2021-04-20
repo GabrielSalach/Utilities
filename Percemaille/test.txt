@@ -1,8 +1,4 @@
-aal=3     
+[SECTION]
+bal=3     
 bal2=4          
 cal=3
-dal2=4
-eal3=4
-cal=3
-dal2=4
-eal3=4
