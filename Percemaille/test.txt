@@ -1,4 +1,0 @@
-[SECTION]
-bal=3     
-bal2=4          
-cal=3
