@@ -1,0 +1,91 @@
+file->section_count = section_count;
+    file->value_count = value_count;
+    if(section_count == 0) {                                                                                    /* If there are no sections at all in the file */  
+        file->subsectiont_values[0] = value_count;                                                                
+        file->matrix = (char ***) malloc(sizeof (char**));
+        file->matrix[0] = (char **) malloc(sizeof (char*) * value_count * 2);
+        for(i = 0; i < value_count * 2; i++) {
+            file->matrix[0][i] = (char*) malloc(sizeof (char) * 32);
+        }
+    } else {                                                                                                    /* Else, allocates the right number of subvalues to each section */
+        for(i = 0; i < 32; i++) {                                                                    
+            file->subsectiont_values[i] = subsection_values[i];
+        }
+        file->matrix = (char ***) malloc(sizeof (char**) * section_count);
+        for(i = 0; i < section_count; i++) {
+            file->matrix[i] = (char **) malloc(sizeof (char*) * subsection_values[i] * 2);
+            printf("allocated %d bytes to matrix[%d]\n", (int) (sizeof (char*) * subsection_values[i] * 2), i);
+        }
+    }
+
+
+
+fseek(stream, 0, SEEK_SET);                                                                                 /* Returns to the beginning of the file. */
+    section_count = 0;
+    value_count = 0;
+    for(i = 0; i < 32; i++) {
+        subsection_values[i] = 0;
+    }
+    /* CA MARCHE APS MDRRRRR */
+    buffer = fgetc(stream);
+    while(buffer != EOF) {                                                                                      /* Loops through file to count the ammount of sections and values */
+        if(buffer == ';') {                                                                                     /* Ignores comment */
+            while(buffer != '\n' && buffer != EOF) {
+                buffer = fgetc(stream);
+            }
+            buffer = fgetc(stream);                                                                             /* Sets the buffer to the next value after \n for the next check */
+        } else if(buffer == '[') {   
+            value_count = 0;
+            i = 0;                                                                           /* Adds 1 section and read until the end of line*/
+            while(buffer != '\n' && i < 32 && buffer != EOF) {
+                buffer = fgetc(stream);
+                (file->matrix[section_count][0])[i] = buffer;
+                i++;
+            }
+            buffer = fgetc(stream);                                                                             /* Sets the buffer to the next value after \n for the next check */
+            while(buffer != '[' && buffer != EOF) {                                                             /* Count every value under this section until it reaches another region or a comment */
+                if(buffer != ';') {                                                                             /* Adds value to the subsection count */
+                    i = 0;
+                    while(buffer != '=' && buffer != '\n' && i< 32 && buffer != EOF) {
+                        (file->matrix[section_count][value_count+1])[i] = buffer;
+                        buffer = fgetc(stream);
+                        i++;
+                    }
+                    buffer = fgetc(stream);
+                    i = 0;
+                    while(buffer != '\n' && i < 32 && buffer != EOF) {
+                        (file->matrix[section_count][value_count+2])[i] = buffer;
+                        buffer = fgetc(stream);
+                        i++;
+                    }
+                    value_count += 2;
+                } else {                                                                                        /* Ignores line if its a comment */
+                    while(buffer != '\n' && buffer != EOF) {
+                        buffer = fgetc(stream);
+                    }
+                }
+                buffer = fgetc(stream);                                                                         /* Sets the buffer to the next value after \n for the next check */
+            }
+            section_count++; 
+        } else {                                                                                                /* Value without section first */
+            i = 0;
+            strcpy(file->matrix[0][0], "DEFAULT");
+            while(buffer != '=' && buffer != '\n' && i< 32 && buffer != EOF) {
+                file->matrix[0][value_count + 1][i] = buffer;
+                buffer = fgetc(stream);
+                i++;
+            }
+            buffer = fgetc(stream);
+            i = 0;
+            while(buffer != '\n' && i < 32 && buffer != EOF) {
+                file->matrix[0][value_count + 2][i] = buffer;
+                buffer = fgetc(stream);
+                i++;
+            }
+            value_count += 2;
+            section_count++;
+            buffer = fgetc(stream);                                                                             /* Sets the buffer to the next value after \n for the next check */
+        }
+    }
+
+    printf("[%s] : %s=%s\n", file->matrix[0][0], file->matrix[0][3], file->matrix[0][4]);

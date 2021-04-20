@@ -7,7 +7,7 @@
 /* ---------- STRUCTS ---------- */
 
 typedef struct{
-    char (**matrix)[32];
+    char*** matrix;
     int section_count, value_count;
     int subsectiont_values[32];
     char path[64];
@@ -32,11 +32,11 @@ Pe_File* pe_file_create(char* path) {
 }
 
 /* ---------- FILE INPUT ---------- */
-/* PENSER A CHECK LE NOMBRE DE SECTIONS CAR SI SECTION = 0 IL FAUT LA REMPLACER PAR DEFAULT DANS LA MATRICE */
+
 int pe_read_file(Pe_File* file) {
     FILE* stream;
     int buffer;
-    unsigned int i;
+    unsigned int i, j;
     int section_count, value_count;
     int subsection_values[32];
     section_count = 0;
@@ -55,6 +55,8 @@ int pe_read_file(Pe_File* file) {
     }
     buffer = fgetc(stream);
     
+    /* COUNTING THE AMOUNT OF SECTIONS AND VALUES */
+
     while(buffer != EOF) {                                                                                      /* Loops through file to count the ammount of sections and values */
         if(buffer == ';') {                                                                                     /* Ignores comment */
             while(buffer != '\n' && buffer != EOF) {
@@ -89,33 +91,25 @@ int pe_read_file(Pe_File* file) {
             buffer = fgetc(stream);                                                                             /* Sets the buffer to the next value after \n for the next check */
         }
     }
-    
+    file->section_count = section_count;
+    file->value_count = value_count;
     printf("The program has found %d Sections and %d values.\n", section_count, value_count);
     for(i = 0; i < section_count; i++) {
         printf("    Section %d : %d values\n", i, subsection_values[i]);
     }
     
 
-    file->section_count = section_count;
-    file->value_count = value_count;
-    if(section_count == 0) {                                                                                    /* If there are no sections at all in the file */
-        file->matrix = (char (**)[32]) malloc(sizeof (char**));
-        file->matrix[0] = (char (*)[32]) malloc(sizeof(char*) * value_count * 2);
-        printf("allocated %d bytes to matrix[0]\n", (int) (sizeof (char*) * value_count * 2));
-    } else {                                                                                                    /* Else, allocates the right number of subvalues to each section */
-        file->matrix = (char (**)[32]) malloc(sizeof (char**) * section_count);
-        for(i = 0; i < section_count; i++) {
-            file->matrix[i] = (char (*)[32]) malloc(sizeof (char*) * subsection_values[i] * 2);
-            printf("allocated %d bytes to matrix[%d]\n", (int) (sizeof (char*) * subsection_values[i] * 2), i);
+    /* MEMORY ALLOCATION */
+    if(section_count == 0) {
+        file->matrix = malloc(sizeof *file->matrix);
+        file->matrix[0] = malloc((value_count * 2 + 1) * sizeof *(file->matrix[0]));
+        for(i = 0; i < value_count * 2 + 1; i++) {
+            file->matrix[0][i] = malloc(32 * sizeof *(file->matrix[0][i]));
         }
     }
+    printf("allocation complete\n");
+
     
-    
-
-    fseek(stream, 0, SEEK_SET);                                                                                 /* Returns to the beginning of the file. */
-
-
-
     
     return 0;
 
@@ -129,12 +123,15 @@ int pe_read_file(Pe_File* file) {
 void pe_file_destroy(Pe_File* file) {
     int i;
     if(file->section_count == 0) {
+        for(i = 0; i < file->value_count * 2; i++) {
+            free(file->matrix[0][i]);
+        }
         free(file->matrix[0]);
+        free(file->matrix);
     } else {
         for(i = 0; i < file->section_count; i++) {
             free(file->matrix[i]);
         }
     }
-    free(file->matrix);
 }
 
