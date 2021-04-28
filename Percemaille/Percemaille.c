@@ -104,10 +104,10 @@ int pe_file_read(Pe_File* file) {
     }
 
     /* Debug */
-    printf("The program has found %d Sections and %d values.\n", section_count, value_count);
+    /*printf("The program has found %d Sections and %d values.\n", section_count, value_count);
     for(i = 0; i < section_count; i++) {
         printf("    Section %d : %d values\n", i, subsection_values[i]);
-    }
+    }*/
     
 
     /* MEMORY ALLOCATION */
@@ -292,11 +292,11 @@ int pe_value_get_as_int(Pe_File* file, char* section, char* variable) {
     int rtrn_value;
     char* string;
     unsigned int i;
-
+    rtrn_value = 0;
     string = malloc(strlen(pe_value_get(file, section, variable)) * sizeof *string);
     strcpy(string, pe_value_get(file, section, variable));
     for(i = 0; i < strlen(string); i++) {
-        rtrn_value += string[i] * pow(10, strlen(string) - i - 1);
+        rtrn_value += (string[i]-48) * pow(10, strlen(string) - i - 1);
     }
 
     return rtrn_value;
